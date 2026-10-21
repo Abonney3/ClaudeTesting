@@ -1,0 +1,6 @@
+{
+  "title": "Field Units",
+  "description": "Oilfield unit converter (pressure, rate, volume, density, mass, length, temp) plus hydrostatic pressure calc.",
+  "status": "beta",
+  "tags": ["converter", "oilfield", "mobile"]
+}

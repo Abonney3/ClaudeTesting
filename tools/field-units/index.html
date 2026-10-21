@@ -1,0 +1,193 @@
+<title>Field Units</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: single column, gauge-like readout on top, all-units list below; widens to two columns on desktop */
+:root {
+  --bg: #eef1f4;
+  --panel: #ffffff;
+  --fg: #1b2530;
+  --muted: #5d6b79;
+  --line: #d3dae1;
+  --accent: #c25e00;
+  --accent-ink: #ffffff;
+  --chip: #e2e7ec;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11171d; --panel: #19222b; --fg: #e6ebf0; --muted: #93a1ae; --line: #2b3742;
+  --accent: #ff9a3c; --accent-ink: #1a1006; --chip: #232e39; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11171d; --panel: #19222b; --fg: #e6ebf0; --muted: #93a1ae; --line: #2b3742;
+  --accent: #ff9a3c; --accent-ink: #1a1006; --chip: #232e39; color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 960px; margin: 0 auto; padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+header h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.75rem; letter-spacing: .01em; margin: 0; text-wrap: balance; }
+header p { margin: 4px 0 0; color: var(--muted); }
+.label { font-family: var(--font-display); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips button { flex: none; border: 1px solid transparent; background: var(--chip); color: var(--fg);
+  font: 500 .9rem var(--font-body); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.chips button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.grid { display: grid; gap: 20px; }
+@media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+
+.entry { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.entry input, .entry select, .calc input { font: 600 1.6rem var(--font-mono); font-variant-numeric: tabular-nums;
+  background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; width: 100%; }
+.entry select { font: 500 1rem var(--font-body); width: auto; }
+
+ul.out { list-style: none; margin: 0; padding: 0; }
+ul.out li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+ul.out li:first-child { border-top: 0; }
+ul.out button { all: unset; cursor: pointer; font: 600 1.15rem var(--font-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; text-align: right; }
+ul.out button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+ul.out .u { color: var(--muted); white-space: nowrap; }
+.hint { color: var(--muted); font-size: .85rem; margin: 0; }
+
+.calc { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.calc label { display: grid; gap: 4px; }
+.calc input { font-size: 1.25rem; }
+.readout { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.readout div { background: var(--bg); border-radius: 8px; padding: 10px 12px; }
+.readout strong { display: block; font: 600 1.4rem var(--font-mono); font-variant-numeric: tabular-nums; color: var(--accent); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 999px; font-size: .9rem; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Field Units</h1>
+    <p>Type a value once and read it in every unit. Tap a result to copy it.</p>
+  </header>
+
+  <nav class="chips" id="cats" aria-label="Unit category"></nav>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="conv-h">
+      <span class="label" id="conv-h">Convert</span>
+      <div class="entry">
+        <input id="val" type="text" inputmode="decimal" value="9500" aria-label="Value">
+        <select id="from" aria-label="From unit"></select>
+      </div>
+      <ul class="out" id="out" aria-live="polite"></ul>
+    </section>
+
+    <section class="panel" aria-labelledby="hyd-h">
+      <span class="label" id="hyd-h">Hydrostatic pressure</span>
+      <div class="calc">
+        <label><span class="label">Fluid weight, ppg</span><input id="mw" type="text" inputmode="decimal" value="8.33"></label>
+        <label><span class="label">TVD, ft</span><input id="tvd" type="text" inputmode="decimal" value="10000"></label>
+      </div>
+      <div class="readout">
+        <div><span class="label">Pressure</span><strong id="hp">–</strong><span class="hint" id="hp-si"></span></div>
+        <div><span class="label">Gradient</span><strong id="grad">–</strong><span class="hint">psi/ft</span></div>
+      </div>
+      <p class="hint">P = 0.052 × ppg × TVD. Fresh water is 8.33 ppg (0.433 psi/ft).</p>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+// Each unit: factor to the category's base unit. Temperature uses explicit to/from functions.
+const CATS = {
+  pressure: { name: "Pressure", def: "psi", units: { psi: 6894.757293, kPa: 1e3, MPa: 1e6, bar: 1e5, atm: 101325 } },
+  rate:     { name: "Rate", def: "bbl/min", units: { "bbl/min": 0.158987295, "gal/min": 0.003785411784, "m³/min": 1, "L/s": 0.06, "bbl/day": 0.158987295 / 1440 } },
+  volume:   { name: "Volume", def: "bbl", units: { bbl: 0.158987295, gal: 0.003785411784, "m³": 1, L: 0.001, "ft³": 0.028316846592 } },
+  density:  { name: "Density", def: "ppg", units: { ppg: 119.826427, "lb/ft³": 16.01846337, "kg/m³": 1, "SG (g/cm³)": 1000 } },
+  mass:     { name: "Mass", def: "lb", units: { lb: 0.45359237, kg: 1, "short ton": 907.18474, tonne: 1000 } },
+  length:   { name: "Length", def: "ft", units: { ft: 0.3048, m: 1, in: 0.0254, mi: 1609.344, km: 1000 } },
+  temp:     { name: "Temperature", def: "°F", temp: true, units: {
+    "°F": { to: f => (f - 32) * 5 / 9, from: c => c * 9 / 5 + 32 },
+    "°C": { to: c => c, from: c => c },
+    "K":  { to: k => k - 273.15, from: c => c + 273.15 } } },
+};
+const DEFAULTS = { pressure: "9500", rate: "100", volume: "500", density: "8.33", mass: "250000", length: "10000", temp: "180" };
+
+const $ = id => document.getElementById(id);
+const num = s => { const v = parseFloat(String(s).replace(/,/g, "")); return Number.isFinite(v) ? v : NaN; };
+const fmt = v => {
+  if (!Number.isFinite(v)) return "–";
+  const a = Math.abs(v);
+  if (a !== 0 && (a < 1e-4 || a >= 1e12)) return v.toExponential(4);
+  const d = a >= 1000 ? 1 : a >= 1 ? 3 : 5;
+  return v.toLocaleString("en-US", { maximumFractionDigits: d });
+};
+function convert(cat, v, from, to) {
+  const c = CATS[cat];
+  if (c.temp) return c.units[to].from(c.units[from].to(v));
+  return v * c.units[from] / c.units[to];
+}
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+let cat = CATS[store.get("fu.cat")] ? store.get("fu.cat") : "pressure";
+
+function renderChips() {
+  $("cats").innerHTML = "";
+  for (const [k, c] of Object.entries(CATS)) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = c.name; b.setAttribute("aria-pressed", k === cat);
+    b.onclick = () => selectCat(k);
+    $("cats").append(b);
+  }
+}
+function selectCat(k) {
+  cat = k; store.set("fu.cat", k);
+  $("from").innerHTML = Object.keys(CATS[k].units).map(u => `<option>${u}</option>`).join("");
+  $("from").value = CATS[k].def;
+  $("val").value = DEFAULTS[k];
+  renderChips(); renderOut();
+}
+function renderOut() {
+  const v = num($("val").value), from = $("from").value;
+  $("out").innerHTML = "";
+  for (const u of Object.keys(CATS[cat].units)) {
+    if (u === from) continue;
+    const r = convert(cat, v, from, u);
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="u"></span><button type="button"></button>`;
+    li.querySelector(".u").textContent = u;
+    const b = li.querySelector("button");
+    b.textContent = fmt(r);
+    b.onclick = () => copy(Number.isFinite(r) ? String(+r.toPrecision(8)) : "", u);
+    $("out").append(li);
+  }
+}
+let toastT;
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 1400); }
+function copy(text, unit) {
+  if (!text) return;
+  const done = () => toast(`Copied ${text} ${unit}`);
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done, () => toast(text));
+  else toast(text);
+}
+function renderHyd() {
+  const mw = num($("mw").value), tvd = num($("tvd").value);
+  const g = 0.052 * mw, p = g * tvd;
+  $("grad").textContent = Number.isFinite(g) ? g.toFixed(3) : "–";
+  $("hp").textContent = Number.isFinite(p) ? `${fmt(Math.round(p))} psi` : "–";
+  $("hp-si").textContent = Number.isFinite(p) ? `${fmt(p * 6894.757293 / 1e6)} MPa` : "";
+}
+
+$("val").addEventListener("input", renderOut);
+$("from").addEventListener("change", renderOut);
+$("mw").addEventListener("input", renderHyd);
+$("tvd").addEventListener("input", renderHyd);
+selectCat(cat);
+renderHyd();
+</script>

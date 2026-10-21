@@ -1,0 +1,17 @@
+<title>TOOL_TITLE</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root { --bg: #f4f6f8; --fg: #1b2530; --muted: #5d6b79; --accent: #c25e00; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #11171d; --fg: #e6ebf0; --muted: #93a1ae; --accent: #ff9a3c; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #11171d; --fg: #e6ebf0; --muted: #93a1ae; --accent: #ff9a3c; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: system-ui, sans-serif; }
+.wrap { max-width: 720px; margin: 0 auto; padding-block: 20px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+</style>
+<div class="wrap">
+  <h1>TOOL_TITLE</h1>
+  <p id="out">Replace me.</p>
+</div>
+<script>
+// tool logic here
+</script>
