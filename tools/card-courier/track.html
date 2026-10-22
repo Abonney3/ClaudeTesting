@@ -1,0 +1,103 @@
+<title>Parcel Tracking</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: courier-style tracking page. Brand band, status headline, vertical timeline, parcel details. */
+:root {
+  --bg: #f3f4f7; --panel: #ffffff; --fg: #141a2e; --muted: #5f6680; --line: #dde0e8;
+  --brand: #16204a; --brand-ink: #ffffff; --signal: #f5c400; --ok: #1f8a4c;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1120; --panel: #161c31; --fg: #e9ecf5; --muted: #9aa1bb; --line: #283050;
+  --brand: #0a0f22; --brand-ink: #ffffff; --signal: #ffd21f; --ok: #43c27a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d1120; --panel: #161c31; --fg: #e9ecf5; --muted: #9aa1bb; --line: #283050;
+  --brand: #0a0f22; --brand-ink: #ffffff; --signal: #ffd21f; --ok: #43c27a; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+.band { background: var(--brand); color: var(--brand-ink); border-bottom: 4px solid var(--signal); }
+.in { max-width: 620px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.band .in { padding-block: 14px; display: flex; align-items: center; gap: 10px; }
+.logo { width: 30px; height: 30px; border-radius: 6px; background: var(--signal); color: var(--brand); display: grid; place-items: center; font: 800 1rem var(--font-display); }
+.band strong { font: 800 1.15rem var(--font-display); letter-spacing: .02em; text-transform: uppercase; }
+main.in { padding-block: 20px 40px; display: grid; gap: 16px; }
+.label { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+h1 { font: 800 1.7rem/1.15 var(--font-display); margin: 4px 0 0; text-wrap: balance; }
+.mono { font-family: var(--font-mono); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 14px; }
+.bar i { height: 6px; border-radius: 3px; background: var(--line); }
+.bar i.on { background: var(--signal); }
+.bar.done i.on { background: var(--ok); }
+ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+ol li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; padding-bottom: 16px; position: relative; }
+ol li::before { content: ""; position: absolute; left: 10px; top: 20px; bottom: 0; width: 2px; background: var(--line); }
+ol li:last-child::before { display: none; }
+.dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--panel); }
+li.on .dot { border-color: var(--signal); background: var(--signal); }
+li.now .dot { box-shadow: 0 0 0 5px color-mix(in srgb, var(--signal) 30%, transparent); }
+li.off { color: var(--muted); }
+li b { display: block; }
+.rows { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0; }
+.rows dt { color: var(--muted); }
+.rows dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.ok { color: var(--ok); font-weight: 600; }
+@media (prefers-reduced-motion: no-preference) { li.now .dot { animation: pulse 1.6s ease-in-out infinite; } }
+@keyframes pulse { 50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--signal) 10%, transparent); } }
+footer { color: var(--muted); font-size: .8rem; text-align: center; }
+</style>
+
+<header class="band"><div class="in"><span class="logo" id="logo">A</span><strong id="brand">Ace Parcel</strong></div></header>
+<main class="in">
+  <section class="panel">
+    <span class="label">Tracking number <span class="mono" id="trk"></span></span>
+    <h1 id="head">Order received</h1>
+    <div class="bar" id="bar"><i></i><i></i><i></i><i></i></div>
+  </section>
+  <section class="panel"><ol id="steps"></ol></section>
+  <section class="panel">
+    <dl class="rows">
+      <dt>Contents</dt><dd id="contents">1 × playing card (replacement)</dd>
+      <dt>Recipient</dt><dd id="who">–</dd>
+      <dt>Service</dt><dd>Same-minute delivery</dd>
+      <dt>Signature</dt><dd id="sig">Required</dd>
+    </dl>
+  </section>
+  <footer id="foot"></footer>
+</main>
+
+<script>
+// Read-only tracking view. All state comes from the query string written by index.html (control panel).
+const STEPS = [
+  ["Order received", "Your request for a replacement card was received."],
+  ["Being packed", "Your card is being packed at the local depot."],
+  ["Out for delivery", "Your package is with the driver and on its way."],
+  ["Delivered", "Your package has arrived. Look at the package in front of you."],
+];
+const q = new URLSearchParams(location.search);
+const stage = Math.min(4, Math.max(1, parseInt(q.get("s"), 10) || 1));
+const courier = q.get("k") || "Ace Parcel";
+const name = q.get("n") || "";
+const card = q.get("c") || "";
+const $ = id => document.getElementById(id);
+
+document.title = `${courier} Tracking`;
+$("brand").textContent = courier;
+$("logo").textContent = courier.trim().charAt(0).toUpperCase() || "A";
+$("trk").textContent = q.get("t") || "AP-000000";
+$("head").textContent = STEPS[stage - 1][0];
+$("who").textContent = name || "On file";
+if (card) $("contents").textContent = `1 × ${card} (replacement)`;
+if (stage === 4) { $("sig").textContent = "Signed — signature matches"; $("sig").className = "ok"; $("bar").classList.add("done"); }
+[...$("bar").children].forEach((b, i) => b.classList.toggle("on", i < stage));
+$("steps").innerHTML = STEPS.map(([t, d], i) => {
+  const cls = i < stage ? "on" + (i === stage - 1 ? " now" : "") : "off";
+  return `<li class="${cls}"><span class="dot"></span><span><b></b><span></span></span></li>`;
+}).join("");
+[...$("steps").children].forEach((li, i) => { li.querySelector("b").textContent = STEPS[i][0]; li.querySelector("b + span").textContent = i < stage ? STEPS[i][1] : "Pending"; });
+$("foot").textContent = `Updated ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+</script>

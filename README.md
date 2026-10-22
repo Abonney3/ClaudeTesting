@@ -10,3 +10,4 @@ Agent/contributor details: [AGENTS.md](AGENTS.md).
 
 ## Tools
 - **Field Units** (`tools/field-units`): oilfield unit converter plus hydrostatic pressure calc.
+- **Card Courier** (`tools/card-courier`): magic trick. Spectator texts for a replacement card; you send packing/delivering/arrived updates with a tracking link. Open on your phone: https://abonney3.github.io/ClaudeTesting/card-courier/

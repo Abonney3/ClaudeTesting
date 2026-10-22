@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate tools/*/tool.json and build the static site into dist/.
 
-Each tool's index.html is a fragment (no doctype/html/head/body); this wraps it.
+Every tools/<slug>/*.html is a fragment (no doctype/html/head/body); this wraps it.
 Usage: python3 scripts/build.py [--check]   (--check = validate only, no output)
 """
 import html, json, shutil, sys
@@ -42,11 +42,12 @@ def load_tools():
                 errors.append(f"{d.name}/tool.json: '{key}' must be {typ.__name__}")
         if meta.get("status") not in STATUSES:
             errors.append(f"{d.name}/tool.json: status must be one of {sorted(STATUSES)}")
-        src = page.read_text()
-        if any(tag in src[:2000].lower() for tag in FORBIDDEN):
-            errors.append(f"{d.name}/index.html: must be a fragment (no doctype/html/head/body)")
-        if "<title>" not in src[:8192]:
-            errors.append(f"{d.name}/index.html: needs <title> near the top")
+        for f in sorted(d.glob("*.html")):
+            src = f.read_text()
+            if any(tag in src[:2000].lower() for tag in FORBIDDEN):
+                errors.append(f"{d.name}/{f.name}: must be a fragment (no doctype/html/head/body)")
+            if "<title>" not in src[:8192]:
+                errors.append(f"{d.name}/{f.name}: needs <title> near the top")
         tools.append((d, meta))
     return tools, errors
 
@@ -65,7 +66,8 @@ def build(tools):
             continue
         out = DIST / d.name
         shutil.copytree(d, out, ignore=shutil.ignore_patterns("tool.json", "README.md"))
-        (out / "index.html").write_text(SKELETON.format(body=(d / "index.html").read_text()))
+        for f in d.glob("*.html"):
+            (out / f.name).write_text(SKELETON.format(body=f.read_text()))
     listed = [(d, m) for d, m in tools if m["status"] != "draft"]
     home = (ROOT / "site" / "home.html").read_text()
     home = home.replace("<!--TOOLS-->", "\n".join(card(d.name, m) for d, m in listed))

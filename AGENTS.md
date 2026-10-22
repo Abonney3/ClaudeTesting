@@ -4,7 +4,7 @@ PURPOSE: collection of small, self-contained browser tools. Phone-first. No buil
 BRANCHES: main = default + Pages deploy source. Work on feature branches, merge to main.
 
 LAYOUT
-- tools/<slug>/index.html  tool page = HTML FRAGMENT (no doctype/html/head/body). <title> first. Inline CSS+JS.
+- tools/<slug>/*.html      every page = HTML FRAGMENT (index.html = entry) (no doctype/html/head/body). <title> first. Inline CSS+JS.
 - tools/<slug>/tool.json   {title, description, status: draft|beta|stable, tags: []}. draft = not published.
 - tools/<slug>/*           extra assets OK; copied to dist (tool.json/README.md excluded).
 - tools/_template/         scaffold source. `_`-prefixed dirs ignored by build.
@@ -32,3 +32,4 @@ TOOLS INDEX
 | slug | status | summary |
 |---|---|---|
 | field-units | beta | oilfield unit converter (psi/kPa/MPa, bbl/min, ppg/SG, lb/tonne, ft/m, °F/°C) + hydrostatic P=0.052*ppg*TVD |
+| card-courier | beta | magic trick. index=magician panel (setup, QR hand-off -> sms:mine?body=CARD, 4 cue texts via sms: links from magician's own phone). track.html=fake courier page, state in query (s=1-4,k,n,c,t). No server: texts come from magician's number; auto-reply needs SMS backend (e.g. Twilio) = future. Needs Pages host (sms: links unreliable in Artifact). |
