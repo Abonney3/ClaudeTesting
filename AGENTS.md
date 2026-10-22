@@ -1,6 +1,7 @@
 # AGENTS.md — repo map for agents (terse by design)
 
 PURPOSE: collection of small, self-contained browser tools. Phone-first. No build deps (python3 stdlib only).
+BRANCHES: main = default + Pages deploy source. Work on feature branches, merge to main.
 
 LAYOUT
 - tools/<slug>/index.html  tool page = HTML FRAGMENT (no doctype/html/head/body). <title> first. Inline CSS+JS.
